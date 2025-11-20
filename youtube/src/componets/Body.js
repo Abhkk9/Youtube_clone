@@ -4,7 +4,7 @@ import MainContainer from './MainContainer'
 
 function Body() {
   return (
-    <div>
+    <div className='grid grid-flow-col col-span-10'>
       <Sidebar/>
       <MainContainer/>
     </div>
