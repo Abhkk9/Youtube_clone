@@ -5,6 +5,10 @@
 /.pnp
 .pnp.js
 
+/.env
+# src
+/src/utils/constants.js
+# /src/utils/constants.js
 # testing
 /coverage
 
