@@ -2,7 +2,7 @@ import React from 'react'
 
 function VideoCard({data}) {
     
-    console.log(data);
+    // console.log(data);
     const {snippet, statistics} = data;
     const {channelTitle,title,thumbnails }= snippet;
     
@@ -12,7 +12,7 @@ function VideoCard({data}) {
       <ul>
         <li className='font-bold'>{title}</li>
         <li>{channelTitle}</li>
-        <li>{statistics.viewCount}</li>
+        <li> Views : {statistics.viewCount}</li>
       </ul>
         
     </div>
