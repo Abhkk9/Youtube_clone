@@ -19,4 +19,13 @@ function VideoCard({data}) {
   )
 }
 
-export default VideoCard
+// Higher Order Component
+const AddVideoCard = ({ data }) => {
+  return (
+    <div className="p-1 m-1 border border-red-900">
+      <VideoCard data={data} />
+    </div>
+  );
+};
+
+export { VideoCard, AddVideoCard };

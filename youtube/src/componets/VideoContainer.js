@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Youtube_API } from '../utils/constants';
-import VideoCard from './VideoCard';
+import {VideoCard ,AddVideoCard} from './VideoCard';
 import {Link} from "react-router-dom";
 function VideoContainer() {
   const [videos, setVideos] = useState(null);
@@ -24,9 +24,12 @@ function VideoContainer() {
       console.error('Error fetching videos:', err);
     }
   }
-
+   function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
   return  videos && (
     <div className='flex flex-wrap'>
+    <AddVideoCard data={videos[getRandomInt(10)]} id ="id"/>
     {videos.map((vedio)=> (
       <Link to ={"/watch?v="+ vedio.id}> <VideoCard data={vedio} id ={vedio.id}/> </Link>
       ))}
