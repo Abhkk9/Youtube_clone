@@ -1,13 +1,51 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { toggleMenu } from "../utils/appSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { Youtube_SEARCH_API } from "../utils/constants";
+import { cacheResults } from "../utils/searchslice";
 
 function Header() {
-  const dispatch =useDispatch();
-
-  const toggleMenuHandler =() =>{
+  const dispatch = useDispatch();
+  const [searchText, setsearchText] = useState("");
+  const [searchResults, setsearchResults] = useState([]);
+  const [showSuggestions, setshowSuggestions] = useState(false);
+  
+  console.log(searchResults);
+  
+  const toggleMenuHandler = () => {
     dispatch(toggleMenu());
-  }
+  };
+
+  const searchCache = useSelector((store) => store.search);
+  // implement LRU cache with a limit of 10 or 100.
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchCache[searchText]) {
+        setsearchResults(searchCache[searchText]);
+      } else getSearchAutoComplete();
+    }, 200);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchText]);
+
+  const getSearchAutoComplete = async () => {
+    try {
+      const data = await fetch(Youtube_SEARCH_API + searchText);
+      const json = await data.json();
+      setsearchResults(json[1]);
+
+      dispatch(
+        cacheResults({
+          [searchText]: json[1],
+        })
+      );
+
+    } catch (err) {
+      console.log("Error in Autocomplete API:" + err);
+    }
+  };
 
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-white border-b sticky top-0 z-20">
@@ -24,43 +62,109 @@ function Header() {
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            onClick={()=>toggleMenuHandler() }
+            onClick={() => toggleMenuHandler()}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
           </svg>
         </button>
 
-  <button type="button" className="flex items-center gap-2">
+        <button type="button" className="flex items-center gap-2">
           {/* small red play in a rounded square + text */}
           <div className="flex items-center justify-cente rounded-md w-12 h-14">
-          <img
-            src="https://www.vhv.rs/dpng/d/404-4049865_youtube-flat-logo-youtube-logo-hd-png-download.png"
-            alt="YouTube"
-            className="h-6 hidden sm:block"
-          />
+            <img
+              src="https://www.vhv.rs/dpng/d/404-4049865_youtube-flat-logo-youtube-logo-hd-png-download.png"
+              alt="YouTube"
+              className="h-6 hidden sm:block"
+            />
           </div>
-          
-  </button>
+        </button>
       </div>
 
       {/* Center: search bar */}
       <div className="flex-1 max-w-2xl mx-4">
-        <div className="flex items-center">
-          <input
-            type="text"
-            placeholder="Search"
-            className="flex-1 border border-gray-200 rounded-l-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-          />
+        <div>
+          <div className="flex items-center">
+            <input
+              type="text"
+              placeholder="Search"
+              className="flex-1 border border-gray-200 rounded-l-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+              value={searchText}
+              onChange={(e) => setsearchText(e.target.value)}
+              onFocus={() => setshowSuggestions(true)}
+              onBlur={() => setshowSuggestions(false)}
+            />
+            <button
+              aria-label="Search"
+              className="bg-gray-100 border border-l-0 border-gray-200 px-4 py-2 rounded-r-full hover:bg-gray-200"
+              onClick={() => getSearchAutoComplete(searchText)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-gray-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
+                />
+              </svg>
+            </button>
+          </div>
+          <div className="fixed bg-white py-2 px-1 rounded-md shadow-sm">
+            {showSuggestions && (
+              <ul className="w-96 rounded-lg">
+                {searchResults.map((item) => (
+                  <li
+                    key={item}
+                    className=" shadow-md bg-white border border-gray-200 px-3 py-2 cursor-pointer hover:bg-gray-100"
+                    onClick={() => {
+                      setsearchText(item);
+                      setsearchResults([]);
+                    }}
+                  >
+                    <div className=" flex ">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-gray-700"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
+                        />
+                      </svg>{" "}
+                      {"  "}
+                      {item}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <button
-            aria-label="Search"
-            className="bg-gray-100 border border-l-0 border-gray-200 px-4 py-2 rounded-r-full hover:bg-gray-200"
+            aria-label="Search with voice"
+            className="p-2 ml-2 rounded-full hover:bg-gray-100"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
-            </svg>
-          </button>
-          <button aria-label="Search with voice" className="p-2 ml-2 rounded-full hover:bg-gray-100">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-700"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
               <path d="M10 2a2 2 0 00-2 2v5a2 2 0 104 0V4a2 2 0 00-2-2z" />
               <path d="M5 10a5 5 0 0010 0h-1a4 4 0 11-8 0H5z" />
             </svg>
@@ -71,18 +175,48 @@ function Header() {
       {/* Right: actions + avatar */}
       <div className="flex items-center gap-3">
         <button className="p-2 rounded-full hover:bg-gray-100" title="Create">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A2 2 0 0122 9.618v4.764a2 2 0 01-2.447 1.894L15 14M4 6h8M4 12h8m-8 6h8" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-gray-700"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 10l4.553-2.276A2 2 0 0122 9.618v4.764a2 2 0 01-2.447 1.894L15 14M4 6h8M4 12h8m-8 6h8"
+            />
           </svg>
         </button>
         <button className="p-2 rounded-full hover:bg-gray-100" title="Apps">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-gray-700"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z" />
           </svg>
         </button>
-        <button className="p-2 rounded-full hover:bg-gray-100" title="Notifications">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        <button
+          className="p-2 rounded-full hover:bg-gray-100"
+          title="Notifications"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-gray-700"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            />
           </svg>
         </button>
 
